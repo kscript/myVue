@@ -16,7 +16,7 @@ Vue.extend({
                 self.vif = Vue.withOption.call(self.vm,"return "+self.sent);
             },
             insert: function(){
-                !this.vif && Vue.replaceNode(this.root,this.node,todo);
+                !this.vif && Vue.replaceNode(this.root,this.node,document.createComment(""));
             },
             unbind: function(){
                 delete this.vm;
