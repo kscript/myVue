@@ -1,4 +1,3 @@
-//实例方法
 Vue.extend({
     each: function(source,fn){
         if(source instanceof Array || Vue.isArray(source)){
