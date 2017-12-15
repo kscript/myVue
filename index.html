@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>vue</title>
+    </head>
+    <body>
+        <div id="app">
+            <input type="text" name="">
+        </div>
+        <script>
+            (function(window){
+                var count = 0;
+                var Cache = {
+                    setOption: function(uid,key,val){
+                        Cache.uid[uid][key] = val;
+                    },
+                    uid: []
+                };
+
+                function Vue(option){
+                    option.before && option.before();
+
+                    var vm = new Vue.fn.init(option);
+
+                    option.created && option.created.call(vm);
+                    return vm;
+                }
+
+                Vue.fn = Vue.prototype = {
+                    constructor: Vue,
+                    init: function(option){
+                        //初始化option之前
+
+                        Vue.createUid.call(this);
+
+                        if(option && option instanceof Object){
+                            Cache.setOption(this.uid, 'option', option);
+                            Vue.initOption.call(this,option);
+                        }
+                        return this;
+                    }
+                }
+
+                //使this继承source的属性
+                //source[Object]: 来源
+                //deep[Boolean]: 是否深拷贝
+                Vue.extend = Vue.fn.extend = function (source,deep){
+                    var self = this;
+                    for(var key in source){
+                        if(deep && source[key] instanceof Object){
+                            self[key] = Vue.extend.call({},source[key],deep);
+                        }else{
+                            self[key] = source[key];
+                        }
+                    }
+                    return this;
+                }
+
+                //静态方法
+                Vue.extend({
+                    initOption: function(option){
+                        if(option.el){
+                            this.el = document.querySelector(option.el);
+                        }
+                        Vue.set(this,'data',{});
+                        Vue.bindData.call(this,'data',option.data||{});
+
+                        Vue.bindMethod.call(this,option.methods);
+                    },
+                    bindData: function (k,propertys){
+                        var self = this;
+                        var obj = self[k];
+                        Vue.each(propertys,function(key,item){
+                            Vue.set(obj, key, item);
+                            //如果值为对象,继续绑定
+                            if(item instanceof Object){
+                                Vue.bindData.call(obj, key, item);
+                            }
+                        });
+
+                        // for(var k in propertys){
+                        //     Vue.set(obj, k, propertys[k]);
+                        //     //如果值为对象,继续绑定
+                        //     if(propertys[k] instanceof Object){
+                        //         Vue.bindData.call(obj, k,propertys[k]);
+                        //     }
+                        // }
+                        return this;
+                    },
+                    //非function将被舍弃
+                    bindMethod: function(methods){
+                        var self = this;
+                        self.methods = {};
+                        Vue.each(methods,function(index,item){
+                            if(item instanceof Function){
+                                self.methods[index] = item;
+                            }
+                        })
+                        // for(var k in methods){
+                        //     if(methods[k] instanceof Function){
+                        //         self.method[k] = methods[k];
+                        //     }
+                        // }
+                        return this;
+                    },
+                    //设置双向绑定
+                    //obj[Object]: 要绑定的对象
+                    //propName[String]: 要绑定的属性
+                    //value[Every]: 值
+                    set: function(obj, propName, value) {
+                        try {
+                            Object.defineProperty(obj, propName, {
+                                get: function() {
+                                    return value;
+                                },
+                                set: function(newValue) {
+                                    //value = newValue;
+                                },
+                                enumerable: true,
+                                configurable: true
+                            });
+                        } catch (error) {
+                            //console.log(error,"browser not supported.");
+                        }
+                    },
+                    createUid: function(){
+                        count = count || 1;
+                        Cache.uid[count] = {};
+                        this.uid = count++;
+                        return this;
+                    }
+                });
+
+                //实例方法
+                Vue.extend({
+                    each: function(source,fn){
+                        if(source instanceof Array){
+                            for(var i = 0,len = source.length;i < len;i++){
+                                fn.call(source,i,source[i]);
+                            }
+                        }else if(source instanceof Object){
+                            //var num = 0;
+                            for(var k in source){
+                                fn.call(source,k,source[k]);
+                            }
+                        }
+                    }
+                });
+
+                //实例方法
+                Vue.fn.extend({
+
+                });
+
+                window.Vue = Vue;
+                Vue.fn.init.prototype = Vue.prototype;
+
+            })(window);
+
+            window.onerror = function (msg, url, row, col, error) {
+                console.log(arguments);
+            }
+        </script>
+    </body>
+</html>
