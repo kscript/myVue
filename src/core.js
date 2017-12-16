@@ -35,7 +35,7 @@
     //使this继承source的属性
     //source[Object]: 来源
     //deep[Boolean]: 是否深拷贝
-    //正序this属性将会被后者覆盖,如果不想this属性被覆盖,请对调this与source并赋值
+
     Vue.extend = Vue.fn.extend = function (source,deep){
         var self = this;
         for(var key in source){
@@ -55,7 +55,7 @@
                 this.el = document.querySelector(option.el);
             }
             this.set(this,'data',{});
-            Vue.bindData.call(this,'data',option.data||{});
+            Vue.bindData.call(this,this,'data',option.data||{});
             Vue.bindMethod.call(this,'methods',option.methods);
             Vue.bindMethod.call(this,'filters',option.filters);
             Vue.bindMethod.call(this,'computed',option.computed);
@@ -64,24 +64,16 @@
             Vue.parseTpl.call(this);
         },
 
-        bindData: function (k,propertys){
+        bindData: function (obj,k,propertys){
             var self = this;
-            var obj = self[k];
+            var target = obj[k];
             Vue.each(propertys,function(key,item){
-                self.set(obj, key, item);
+                self.set(target, key, item);
                 //如果值为对象,继续绑定
                 if(item instanceof Object){
-                    Vue.bindData.call(self, key, item);
+                    Vue.bindData.call(self, target, key, item);
                 }
             });
-
-            // for(var k in propertys){
-            //     Vue.set(obj, k, propertys[k]);
-            //     //如果值为对象,继续绑定
-            //     if(propertys[k] instanceof Object){
-            //         Vue.bindData.call(obj, k,propertys[k]);
-            //     }
-            // }
             return this;
         },
         //非function将被舍弃
@@ -115,10 +107,13 @@
             self.el = vnode;
         },
 
-        //返回字符串时可以继续加工
-        withOption: function(str,crude){
-            var fn = 'var methods = this.methods,data = this.data;with(window){with(methods){with(data){'+str+'}}}';
-            return crude ? fn :new Function(fn).bind(this)();
+        withOption: function(str,opt){
+            opt = Vue.extend.call({
+                _e: Vue.each
+            },opt || {});
+            var code = 'var methods = this.methods,data = this.data;with(window){with(methods){with(data){with(opt){'+str+'}}}}';
+            //console.log(code);
+            return new Function('opt',code).bind(this)(opt);
         },
 
         //设置双向绑定
@@ -149,7 +144,7 @@
             return this;
         }
     });
-    
+
 
     window.Vue = Vue;
     Vue.fn.init.prototype = Vue.prototype;
