@@ -12,11 +12,11 @@ Vue.extend({
                 return this.sent !== null;
             },
             parse: function(){
-                var self = this;
-                self.vif = Vue.withOption.call(self.vm,"return "+self.sent);
+                this.node.directives = this.node.directives || {};
+                this.code = "return " + this.sent;
             },
             insert: function(){
-                !this.vif && Vue.replaceNode(this.root,this.node,document.createComment(""));
+                !Vue.withOption.call(this.vm,this.code) && Vue.replaceNode(this.root,this.node,document.createComment(""));
             },
             unbind: function(){
                 delete this.vm;
@@ -36,12 +36,10 @@ Vue.extend({
                 return this.sent !== '';
             },
             parse: function(){
-                var self = this;
-                self.vmodel = Vue.withOption.call(self.vm,"return "+self.sent);
+                this.code ="return "+this.sent;
             },
             insert: function(){
-                var self = this;
-                this.node.value = self.vmodel;
+                this.node.value =  Vue.withOption.call(this.vm,this.code);
             },
             unbind: function(){
                 delete this.vm;
@@ -62,22 +60,21 @@ Vue.extend({
                 return this.sent !== null;
             },
             parse: function(){
-                var self = this;
                 var sents = this.sent.replace(/\s+/g," ").split(" in ");
                 var left = sents[0].match(/[a-zA-z$_][a-zA-z$_0-9]+/g);//按变量规则取
                 var right = sents[1].match(/[a-zA-z$_][a-zA-z$_0-9]+/g);
-                self.vfor = Vue.withOption.call(self.vm,'with(obj){Vue.each('+right+',function('+left+'){obj.each.apply(obj,arguments)});}',true,self);
+                this.code = '_e('+right+',function('+left+'){each.apply(this,arguments)});'
             },
             insert: function(){
                 var self = this;
-                var node;
-                self.each = function(index,vo){
-                    node = self.node.cloneNode(true);
-                    node.innerHTML = index;
-                    Vue.insertNode(self.node.parentNode,self.node, node);
-                }
-                new Function('obj',self.vfor).bind(self.vm)(self);
-                Vue.removeNode(self.node.parentNode,self.node);
+                Vue.withOption.call(this.vm, this.code, {
+                    each: function(index,vo){
+                        node = self.node.cloneNode(true);
+                        node.innerHTML = index;
+                        Vue.insertNode(self.node.parentNode, self.node, node);
+                    }
+                });
+                Vue.removeNode(this.node.parentNode, this.node);
             },
             unbind: function(){
                 delete this.vm;
@@ -92,18 +89,25 @@ Vue.extend({
         var list = [];
         var dirs = this.directives;
         var node,tpl;
+        var nums = 0;
         Vue.each(dirs,function(key,dir){
-            for(var index=0,len = dom.childNodes.length;index<len;index++){
+            Vue.each(dom.childNodes,function(index,item){
                 node = vnode.childNodes[index];
                 if(node && node.nodeType==1){
-                    dir.bind(self,vnode,node);
-                    if(dir.get()){
-                        dir.parse();
-                        dir.insert();
+                    //vnode只是映射,ignores属性设置在dom上才能持久
+                    item.ignores = item.ignores || {};
+                    if(!item.ignores[key]){
+                        dir.bind(self,vnode,node);
+                        if(dir.get()){
+                            dir.parse();
+                            dir.insert();
+                        }else{
+                            item.ignores[key] = true;
+                        }
+                        dir.unbind();
                     }
-                    dir.unbind();
                 }
-            };
+            });
         });
         return this;
     },
