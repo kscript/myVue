@@ -6,7 +6,7 @@
     </head>
     <body>
         <div id="app">
-            <span v-for="(vo,index) in list"></span>
+            <span v-for="($vo,index) in list">{{test(vo.index)}}</span>
             <input type="text" name="" v-if="show" v-model="val">
         </div>
         <script src="./src/core.js"></script>
@@ -24,15 +24,15 @@
                 },
                 methods: {
                     index: 4,
-                    test: function(){
-                        return this;
+                    test: function(index){
+                        return "index:"+index+"<br>";
                     }
                 },
                 before: function(){
 
                 },
                 created: function(){
-
+                    console.log(this);
                 }
             });
         </script>

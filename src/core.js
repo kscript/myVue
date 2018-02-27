@@ -28,6 +28,7 @@
                 Vue.initOption.call(this,option);
             }
             option.created && option.created.call(this);
+            Cache.setOption(this.uid, '$vm', this);
             return this;
         }
     }
@@ -54,13 +55,14 @@
             if(option.el){
                 this.el = document.querySelector(option.el);
             }
+            this.proxy('data');
             this.set(this,'data',{});
             Vue.bindData.call(this,this,'data',option.data||{});
             Vue.bindMethod.call(this,'methods',option.methods);
             Vue.bindMethod.call(this,'filters',option.filters);
             Vue.bindMethod.call(this,'computed',option.computed);
             this.directives = Vue.extend.call(this.directives || {},Vue.directives);
-
+            //
             Vue.parseTpl.call(this);
         },
 
