@@ -20,4 +20,32 @@ Vue.fn.extend({
             }
         }
     },
+    proxy: function(key) {
+        var self = this;
+        var newKey = '_'+key;
+        var value = self[key];
+
+        if(!self[key]){
+            self.set(self,key,{});
+        }
+        try {
+            Object.defineProperty(self, newKey , {
+                get: function() {
+                    console.log(arguments,1);
+                    return value;
+                },
+                set: function(newValue) {
+                    console.log(arguments,1);
+                    value = newValue;
+                },
+                enumerable: true,
+                configurable: true
+            });
+        } catch (error) {
+            console.log(error,self,arguments,"browser not supported.");
+        }
+            //console.log(arguments);
+            //return this.set.apply(this,arguments);
+
+    },
 });

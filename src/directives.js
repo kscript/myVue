@@ -63,14 +63,16 @@ Vue.extend({
                 var sents = this.sent.replace(/\s+/g," ").split(" in ");
                 var left = sents[0].match(/[a-zA-z$_][a-zA-z$_0-9]+/g);//按变量规则取
                 var right = sents[1].match(/[a-zA-z$_][a-zA-z$_0-9]+/g);
-                this.code = '_e('+right+',function('+left+'){each.apply(this,arguments)});'
+                this.code = '_e('+right+',function('+left+'){each.apply(this,arguments)});';
             },
             insert: function(){
                 var self = this;
                 Vue.withOption.call(this.vm, this.code, {
                     each: function(index,vo){
                         node = self.node.cloneNode(true);
-                        node.innerHTML = index;
+                        node.innerHTML = node.innerHTML.replace(/\{\{(.*?)\}\}/g,function(s,m){
+                            return  Vue.withOption.call(self.vm,"return "+m,{vo:vo});
+                        });
                         Vue.insertNode(self.node.parentNode, self.node, node);
                     }
                 });
